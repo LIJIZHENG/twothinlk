@@ -34,8 +34,13 @@ AppAsset::register($this);
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
+    //菜单配置
     $menuItems = [
         ['label' => 'Home', 'url' => ['/site/index']],
+        ['label'=>'下拉菜单','items'=>[
+                ['label'=>'添加分类','url'=>['goods/add-category']],
+                ['label'=>'分类列表','url'=>['goods/ztree']],
+        ]],
     ];
     if (Yii::$app->user->isGuest) {
         $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];

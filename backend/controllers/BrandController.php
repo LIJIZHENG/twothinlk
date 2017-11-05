@@ -2,14 +2,19 @@
 
 namespace backend\controllers;
 
-use backend\filters\RbacFilter;
+
 use backend\models\Brand;
 use yii\data\Pagination;
 use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
-use flyok666\uploadifive\UploadAction;
-use flyok666\qiniu\Qiniu;
+
 use yii\web\UploadedFile;
+
+// 引入鉴权类
+use Qiniu\Auth;
+
+// 引入上传类
+use Qiniu\Storage\UploadManager;
 
 class BrandController extends \yii\web\Controller
 {
@@ -48,13 +53,87 @@ class BrandController extends \yii\web\Controller
             if($imgFile){
                 $fileName = '/upload/'.uniqid().'.'.$imgFile->extension;
                 $imgFile->saveAs(\Yii::getAlias('@webroot').$fileName,0);
-                return Json::encode(['url'=>$fileName]);
+                //=========将图片上传到七牛云============
+                // 需要填写你的 Access Key 和 Secret Key
+                $accessKey ="hqNnJqiC0r7xoCcroZKMbqgbmELaZPyYmrbnNIDg";
+                $secretKey = "KwzsOiQ7UbAesjwXKh5fMblJCbbrOHuN6grCQxzq";
+                //对象存储 空间名称
+                $bucket = "php0711";
+                $domain = 'oyxduf0fk.bkt.clouddn.com';
+
+                    // 构建鉴权对象
+                $auth = new Auth($accessKey, $secretKey);
+
+                // 生成上传 Token
+                $token = $auth->uploadToken($bucket);
+
+                // 要上传文件的本地路径
+                $filePath = \Yii::getAlias('@webroot').$fileName;
+
+                // 上传到七牛后保存的文件名
+                $key = $fileName;
+
+                // 初始化 UploadManager 对象并进行文件的上传。
+                $uploadMgr = new UploadManager();
+
+                // 调用 UploadManager 的 putFile 方法进行文件的上传。
+                list($ret, $err) = $uploadMgr->putFile($token, $key, $filePath);
+                //echo "\n====> putFile result: \n";
+                if ($err !== null) {
+                    //上传失败 打印错误
+                    //var_dump($err);
+                    return Json::encode(['error'=>$err]);
+                } else {
+                    //没有出错  打印上传结果
+                    //var_dump($ret);
+                    return Json::encode(['url'=>'http://'.$domain.'/'.$fileName]);
+                }
+                //====================================
+                //return Json::encode(['url'=>$fileName]);
             }
         }
 
 
     }
 
+
+    //测试七牛云上传
+    public function actionTest(){
+
+
+        // 需要填写你的 Access Key 和 Secret Key
+        $accessKey ="hqNnJqiC0r7xoCcroZKMbqgbmELaZPyYmrbnNIDg";
+        $secretKey = "KwzsOiQ7UbAesjwXKh5fMblJCbbrOHuN6grCQxzq";
+                //对象存储 空间名称
+        $bucket = "php0711";
+
+        // 构建鉴权对象
+        $auth = new Auth($accessKey, $secretKey);
+
+        // 生成上传 Token
+        $token = $auth->uploadToken($bucket);
+
+        // 要上传文件的本地路径
+        $filePath = \Yii::getAlias('@webroot').'/upload/59fe779423988.jpg';
+
+        // 上传到七牛后保存的文件名
+        $key = '/upload/59fe779423988.jpg';
+
+        // 初始化 UploadManager 对象并进行文件的上传。
+        $uploadMgr = new UploadManager();
+
+        // 调用 UploadManager 的 putFile 方法进行文件的上传。
+        list($ret, $err) = $uploadMgr->putFile($token, $key, $filePath);
+        echo "\n====> putFile result: \n";
+        if ($err !== null) {
+            //上传失败 打印错误
+            var_dump($err);
+        } else {
+            //没有出错  打印上传结果
+            var_dump($ret);
+        }
+
+    }
 
 
 

@@ -38,6 +38,62 @@ class GoodsController extends \yii\web\Controller
 
         return $this->render('add-category',['model'=>$model]);
     }
+    public function actionEditCategory($id){
+        $model = GoodsCategory::findOne(['id'=>$id]);
+        //$parent_id = $model->parent_id;
+        $request = \Yii::$app->request;
+        if($request->isPost){
+            $model->load($request->post());
+            if($model->validate()){
+                if($model->parent_id == 0){
+                    //修改根节点
+
+                    //根节点修改为根节点报错,旧的parent_id为0
+                    if($model->getOldAttribute('parent_id') == 0){
+                        $model->save();
+                    }else{
+                        $model->makeRoot();
+                    }
+
+                    /*$countries = new Menu(['name' => 'Countries']);
+                    $countries->makeRoot();*/
+                    //$model->makeRoot();
+                    //$model->save();//不能使用save来创建节点
+                    echo '修改根节点成功';exit;
+                }else{
+                    //添加子节点
+                    /*$russia = new Menu(['name' => 'Russia']);
+                    $russia->prependTo($countries);*/
+                    $parent = GoodsCategory::findOne(['id'=>$model->parent_id]);
+                    $model->prependTo($parent);
+                    echo '修改子节点成功';exit;
+                }
+
+            }
+        }
+
+
+        return $this->render('add-category',['model'=>$model]);
+    }
+
+    //删除分类
+    public function actionDel($id){
+        $model = GoodsCategory::findOne(['id'=>$id]);
+        //只能删空节点
+        //空节点 叶子节点
+        if($model->isLeaf()){
+            if($model->parent_id != 0){
+                $model->delete();
+            }else{
+                $model->deleteWithChildren();
+            }
+            echo '删除成功';
+        }else{
+            //有子节点
+            echo '有子节点 不能删除';
+        }
+
+    }
 
     //测试ztree
     public function actionTest(){

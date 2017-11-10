@@ -1,6 +1,8 @@
 <?php
 namespace backend\controllers;
 
+use backend\models\Menu;
+use backend\models\User;
 use Yii;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -15,7 +17,7 @@ class SiteController extends Controller
     /**
      * @inheritdoc
      */
-    public function behaviors()
+    /*public function behaviors()
     {
         return [
             'access' => [
@@ -39,7 +41,7 @@ class SiteController extends Controller
                 ],
             ],
         ];
-    }
+    }*/
 
     /**
      * @inheritdoc
@@ -94,5 +96,17 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
+    }
+
+    //测试菜单关系
+    public function actionTest(){
+        $menu = Menu::findOne(['id'=>1]);//用户管理
+        var_dump($menu->children);
+    }
+    //测试模拟登录
+    public function actionTestLogin(){
+        $admin = User::findOne(['id'=>1]);
+        Yii::$app->user->login($admin);
+        return $this->redirect(['site/index']);
     }
 }

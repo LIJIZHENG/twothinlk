@@ -35,20 +35,16 @@ AppAsset::register($this);
         ],
     ]);
     //菜单配置
-    $menuItems = [
-        ['label' => 'Home', 'url' => ['/site/index']],
-        ['label'=>'下拉菜单','items'=>[
-                ['label'=>'添加分类','url'=>['goods/add-category']],
-                ['label'=>'分类列表','url'=>['goods/ztree']],
-        ]],
-    ];
+
     if (Yii::$app->user->isGuest) {
-        $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];
+        $menuItems = [];
+        $menuItems[] = ['label' => '登录', 'url' => Yii::$app->user->loginUrl];
     } else {
+        $menuItems = Yii::$app->user->identity->menus;
         $menuItems[] = '<li>'
             . Html::beginForm(['/site/logout'], 'post')
             . Html::submitButton(
-                'Logout (' . Yii::$app->user->identity->username . ')',
+                '注销 (' . Yii::$app->user->identity->username . ')',
                 ['class' => 'btn btn-link logout']
             )
             . Html::endForm()

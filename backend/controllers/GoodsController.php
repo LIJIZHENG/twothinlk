@@ -3,6 +3,7 @@
 namespace backend\controllers;
 
 use backend\models\GoodsCategory;
+use yii\data\Pagination;
 use yii\web\Response;
 
 class GoodsController extends \yii\web\Controller
@@ -102,6 +103,31 @@ class GoodsController extends \yii\web\Controller
         return $this->renderPartial('test');
     }
 
+
+    //商品列表(商品搜索结果列表)
+    public function actionList(){
+        //查询 电视机  where name like %电视机%
+        $name = \Yii::$app->request->get('name');
+        $sn = \Yii::$app->request->get('sn');
+        //...
+        //$name = isset($_GET['name'])?$_GET['name']:null;
+        //GoodsCategory::find()->where()->andWhere();
+        $query = Goods::find();
+        if($name){
+            $query->andWhere(['like','name',$name]);//$query->where = xxxx;
+        }
+        if($sn){
+            $query->andWhere(['sn'=>$sn]);
+        }
+        //...
+        $pager = new Pagination();
+        $pager->totalCount = $query->count();
+        $pager->pageSize = 10;
+
+        $models = $query->offset()->limit()->all();
+
+
+    }
 
 
 

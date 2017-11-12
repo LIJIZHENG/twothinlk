@@ -109,4 +109,10 @@ class SiteController extends Controller
         Yii::$app->user->login($admin);
         return $this->redirect(['site/index']);
     }
+
+    public function actionRedis(){
+        $redis = new \Redis();
+        $redis->connect('localhost',6379);
+        var_dump($redis->get('name'));
+    }
 }

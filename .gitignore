@@ -33,3 +33,6 @@ phpunit.phar
 
 # vagrant runtime
 /.vagrant
+/backend/views/test
+/backend/controllers/TestController.php
+/backend/web/js/cai.js

@@ -67,7 +67,7 @@ class MemberController extends \yii\web\Controller
         //$code = $redis->get('captcha_'.$phone);
         //if($code == '1234');
 
-
+        
         return 'sucess';// 'fail'
 
     }

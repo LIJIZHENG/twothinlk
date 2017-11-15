@@ -143,7 +143,10 @@
                     //假设需要验证用户唯一
                     remote: {
                         url:"<?=\yii\helpers\Url::to(['member/check-name'])?>",
-
+                        data:{
+                            a:'a',
+                            b:'b'
+                        }
                     },
                 },
                 password: {

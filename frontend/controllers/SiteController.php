@@ -2,6 +2,7 @@
 namespace frontend\controllers;
 
 use backend\models\GoodsCategory;
+use frontend\models\Goods;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\data\Pagination;
@@ -15,12 +16,14 @@ use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResetPasswordForm;
 use frontend\models\SignupForm;
 use frontend\models\ContactForm;
+use yii\web\Cookie;
 
 /**
  * Site controller
  */
 class SiteController extends Controller
 {
+    public $enableCsrfValidation = false;
     /**
      * @inheritdoc
      */
@@ -257,5 +260,127 @@ class SiteController extends Controller
 
         $models = $query->limit($pager->limit)->offset($pager->offset)->all();
         return $this->render('list',['models'=>$models,'pager'=>$pager]);
+    }
+
+    //测试:将测试数据保存到cookie
+    public function actionTestCart(){
+        $carts = ['1'=>'3','2'=>'2'];
+        $cookies = Yii::$app->response->cookies;
+        $cookie = new Cookie();
+        $cookie->name = 'carts';
+        $cookie->value = serialize($carts);
+        $cookies->add($cookie);
+        echo '购物车测试数据准备完成';
+    }
+    //添加购物车   商品详情页,点击添加到购物车---->添加成功提示页(商品已经添加到购物车)---->进入购物车,显示购物车商品
+    public function actionAddCart($goods_id,$amount){
+        //(商品已经添加到购物车)添加操作是在当前页面执行
+        //需要判断登录和未登录
+        if(Yii::$app->user->isGuest){
+            //操作cookie购物车
+
+            //获取cookie中购物车数据
+            $cookies = Yii::$app->request->cookies;
+            $carts = $cookies->getValue('carts');
+            if($carts){
+                $carts = unserialize($carts);//$carts = ['1'=>'3','2'=>'2'];
+            }else{
+                $carts = [];
+            }
+
+            //$carts = [2=>10];//=>[2=>10,1=>99]
+            //购物车中是否存在该商品,如果存在数量累加 不存在,直接添加
+            if(array_key_exists($goods_id,$carts)){
+                $carts[$goods_id] += $amount;
+            }else{
+                $carts[$goods_id] = $amount;
+            }
+            //var_dump($carts);exit;
+            //$carts = [$goods_id=>$amount];
+            $cookies = Yii::$app->response->cookies;
+            $cookie = new Cookie();
+            $cookie->name = 'carts';
+            $cookie->value = serialize($carts);
+            $cookies->add($cookie);
+
+
+        }else{
+            //操作数据库购物车
+        }
+
+        //跳转到购物车页面
+        return $this->redirect(['cart']);// site=>site/login  member=>member/login
+    }
+
+
+    //购物车页面
+    public function actionCart(){
+        //需要判断登录和未登录
+        if(Yii::$app->user->isGuest){
+            //未登录,购物车数据存放到cookie
+            //举例: id为1的商品3个 id为8的商品有2个
+            /*$carts = [
+                ['goods_id'=>1,'amount'=>3],
+                ['goods_id'=>8,'amount'=>2],
+            ];*/
+            //能否使用使用一维数组来简化购物车
+            //$carts = ['1'=>'3','2'=>'2'];
+
+            //从cookie中取出购物车数据,调用视图展示
+            $cookies = Yii::$app->request->cookies;
+            $carts = $cookies->getValue('carts');
+            if($carts){
+                $carts = unserialize($carts);//$carts = ['1'=>'3','2'=>'2'];
+            }else{
+                $carts = [];
+            }
+            //$carts肯定是一个数组
+            //获取购物车商品信息
+            $models = Goods::find()->where(['in','id',array_keys($carts)])->all();
+            //$models = [GOODS,GOODS,GOODS]
+            //var_dump($models);exit;
+
+
+        }else{
+            //已登录,购物车数据存放到数据表
+            //$carts= [CART,CART...];  =>['1'=>'3','2'=>'2']
+            //$carts需要转换一下格式
+        }
+        return $this->render('cart',['carts'=>$carts,'models'=>$models]);
+    }
+
+    //AJAX操作购物车
+    public function actionAjaxCart($type){
+        //登录操作数据库 未登录操作cookie
+        switch ($type){
+            case 'change'://修改购物车
+                $goods_id = Yii::$app->request->post('goods_id');
+                $amount = Yii::$app->request->post('amount');
+                if(Yii::$app->user->isGuest){
+                    //取出cookie中的购物车
+                    $cookies = Yii::$app->request->cookies;
+                    $carts = $cookies->getValue('carts');
+                    if($carts){
+                        $carts = unserialize($carts);//$carts = ['1'=>'3','2'=>'2'];
+                    }else{
+                        $carts = [];
+                    }
+                    //修改购物车商品数量
+                    $carts[$goods_id] = $amount;
+                    //保存cookie
+                    $cookies = Yii::$app->response->cookies;
+                    $cookie = new Cookie();
+                    $cookie->name = 'carts';
+                    $cookie->value = serialize($carts);
+                    $cookies->add($cookie);
+
+                }else{
+
+                }
+                break;
+            case 'del':
+
+                break;
+        }
     }
 }

@@ -3,10 +3,12 @@ namespace frontend\controllers;
 
 use backend\models\GoodsCategory;
 use frontend\models\Goods;
+use frontend\models\Order;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\data\Pagination;
 use yii\db\ActiveQuery;
+use yii\db\Exception;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -382,5 +384,85 @@ class SiteController extends Controller
 
                 break;
         }
+    }
+
+
+    //订单
+    public function actionOrder(){
+        $request = Yii::$app->request;
+        if($request->isPost){
+            $order = new Order();
+            $order->member_id  = Yii::$app->user->id;
+            $address_id = $request->post('address_id');
+            $address = Address::findOne(['id'=>$address_id,'member_id'=>Yii::$app->user->id]);
+            if($address == null){
+                //抛出404异常
+            }
+            $order->name = $address->name;
+            //.....
+            /*name	varchar(50)	收货人
+province	varchar(20)	省
+city	varchar(20)	市
+area	varchar(20)	县
+address	varchar(255)	详细地址
+tel	char(11)	电话号码*/
+            //配送方式
+            $order->delivery_id = $request->post('delivery_id');
+            $order->delivery_name = Order::$deliveries[$order->delivery_id][0];
+            $order->delivery_price = Order::$deliveries[$order->delivery_id][1];
+            //支付方式
+
+            //金额
+            $order->total = $order->delivery_price;
+            $order->status = 1;
+            //...
+
+            //开启事务(操作数据表之前开始)
+            $transaction = Yii::$app->db->beginTransaction();//开启事务 Yii::$app->db->createCommand('sql')->execute();
+            try{
+                if($order->save()){
+                    //订单保存 保存订单商品表
+                    $carts = Cart::find()->where(['member_id'=>Yii::$app->user->id])->all();
+                    foreach ($carts as $cart){
+                        //$cart = ['id'=>1,'goods_id'=>1,'member_id'=>1,'amount'=>2];
+                        //检测商品库存是否足够
+                        if($cart->amount > $cart->goods->stock){
+                            throw new Exception($cart->goods->name.'商品库存不足');
+                        }
+
+
+                        $order_goods = new OrderGoods();
+                        $order_goods->order_id = $order->id;
+                        $order_goods->goods_id = $cart->goods_id;
+                        $order_goods->goods_name = $cart->goods->name;
+                        //....
+                        $order_goods->amount = $cart->amount;
+                        $order_goods->total = $order_goods->price*$order_goods->amount;
+                        $order_goods->save();
+                        $order->total += $order_goods->total;//订单金额累加
+                        //扣减商品库存
+                        /*$cart->goods->stock -= $cart->amount;
+                        $cart->goods->save();*/
+                        Goods::updateAllCounters(['stock'=>-$cart->amount],['id'=>$cart->goods_id]);
+                    }
+                    //删除购物车
+                    Cart::deleteAll('member_id='.Yii::$app->user->id);
+                    $order->save();
+                }
+                //提交事务
+                $transaction->commit();
+
+            }catch (Exception $e){
+                //回滚
+                $transaction->rollBack();
+
+                //下单失败,跳转回购物车,并且提示商品库存不足
+                echo $e->getMessage();exit;
+            }
+
+
+        }
+
+
     }
 }

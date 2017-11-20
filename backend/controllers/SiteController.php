@@ -115,4 +115,13 @@ class SiteController extends Controller
         $redis->connect('localhost',6379);
         var_dump($redis->get('name'));
     }
+
+    //生成首页静态页
+    public function actionIndexStatic(){
+        $content =  $this->renderPartial('@frontend/views/site/index');//页面输出
+        //保存到静态文件
+        $fileName = Yii::getAlias('@frontend/web/index.html');
+        file_put_contents($fileName,$content);
+        echo '首页静态文件生成成功!';
+    }
 }

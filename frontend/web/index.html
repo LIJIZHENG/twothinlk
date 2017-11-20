@@ -138,8 +138,31 @@
                 <em></em>
             </div>
 
-            <?=\backend\models\GoodsCategory::getIndexGoodsCategory()?>
-
+            <div class="cat_bd"><div class="cat item1">
+                    <h3><a href="">家用电器</a><b></b></h3>
+                    <div class="cat_detail"><dl class="dl_1st">
+                            <dt><a href="">洗衣机</a></dt>
+                            <dd><a href="">涡轮洗衣机</a><a href="">滚筒洗衣机</a></dd>
+                        </dl><dl >
+                            <dt><a href="">平板电视</a></dt>
+                            <dd><a href="">曲面电视</a><a href="">液晶电视</a></dd>
+                        </dl><dl >
+                            <dt><a href="">电冰箱</a></dt>
+                            <dd></dd>
+                        </dl></div>
+                </div><div class="cat ">
+                    <h3><a href="">手机</a><b></b></h3>
+                    <div class="cat_detail"><dl class="dl_1st">
+                            <dt><a href="">安卓</a></dt>
+                            <dd><a href="">千元机</a><a href="">全面屏</a></dd>
+                        </dl><dl >
+                            <dt><a href="">IOS</a></dt>
+                            <dd><a href="">IPHONEX</a><a href="">IPHONE8</a></dd>
+                        </dl></div>
+                </div><div class="cat ">
+                    <h3><a href="">保健品</a><b></b></h3>
+                    <div class="cat_detail"></div>
+                </div></div>
         </div>
         <!--  商品分类部分 end-->
 
@@ -710,7 +733,7 @@
 <!-- 底部版权 end -->
 <script>
     //通过ajax更新静态页用户登录状态
-    $.getJSON("<?=\yii\helpers\Url::to(['site/user-status'])?>",function(json){
+    $.getJSON("/site/user-status",function(json){
         //只处理登录状态
         if(json.isLogin){
             $("#user_info").html('欢迎'+json.username+',[<a href="register.html">注销</a>]');

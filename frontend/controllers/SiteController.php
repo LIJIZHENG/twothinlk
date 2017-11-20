@@ -82,7 +82,30 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        //首页静态化 ob缓存
+        //开启ob缓存(在页面输出前开启)
+        //ob_start();
+        //页面输出
+        //获取ob缓存内容
+        //ob_get_contents();
+        //将内容保存到静态文件index.html
+        //file_put_contents();
+
+        $content =  $this->render('index');//页面输出
+        //保存到静态文件
+        //file_put_contents('index.html',$content);
+        return $content;
+        //2 静态页面中的动态内容(用户登录状态),如何处理?
+    }
+
+    //通过AJAX获取用户登录状态
+    public function actionUserStatus(){
+        //返回 登录状态  用户名
+        /*$isLogin = !Yii::$app->user->isGuest;
+        $username = $isLogin?Yii::$app->user->identity->username:'';
+        return json_encode(['isLogin'=>$isLogin,'username'=>$username]);*/
+        return json_encode(['isLogin'=>1,'username'=>'张三']);
+        //return json_encode(['isLogin'=>0,'username'=>'']);
     }
 
     /**
@@ -464,5 +487,40 @@ tel	char(11)	电话号码*/
         }
 
 
+    }
+
+    //商品详情
+    public function actionGoods($id){
+        $goods = Goods::findOne(['id'=>$id]);
+
+        //商品点击(浏览次数)
+        //视图中echo $goods->view_times;
+        /*$goods->view_times += 1;
+        $goods->save();*/
+        //Goods::updateAllCounters(['view_times'=>1],['id'=>$id]);
+        $redis = new \Redis();
+        $view_times = $redis->incr('view_times_'.$id);
+
+        $goods->view_times =  $view_times;
+
+        return $this->render('goods',['goods'=>$goods]);
+    }
+
+    //AJAX获取商品浏览次数
+    public function actionViewTimes($id){
+        $redis = new \Redis();
+        //
+        return $redis->incr('view_times_'.$id);
+    }
+
+    //邮件
+    public function actionEmail(){
+        $r = Yii::$app->mailer->compose()
+            ->setFrom('lilinfeng1024@163.com')
+            ->setTo('lilinfeng1024@163.com')
+            ->setSubject('第二封情书')
+            ->setHtmlBody('<p><span style="color: red">我 秦始皇 打钱</span>它规定怎样将个人计算机连接到Internet的邮件服务器</p>')
+            ->send();
+    var_dump($r);
     }
 }

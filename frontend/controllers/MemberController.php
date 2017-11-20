@@ -45,10 +45,29 @@ class MemberController extends \yii\web\Controller
 
     //AJAX发送短信  后台AJAX发送短信功能:
     public function actionAjaxSms($phone){
+        $redis = new \Redis();
+        $redis->connect('127.0.0.1');
+        //==========设置短信发送间隔(1分钟同一手机号只能发送一条)===========
+        //redis获取该手机号码发送验证码的信息(验证码,过期时间)
+        $code = $redis->get('captcha_'.$phone);
+        if($code){
+            //最近10分钟有发送短信
+            //判断是否是一分钟内发送的(根据过期时间)
+            // 10分钟过期 -  生命还剩多少秒  =  发送多久了
+            //$redis->ttl();//生命还剩多少秒
+            $result = 10*60 - $redis->ttl('captcha_'.$phone);
+            if($result <= 60){
+                echo '两次短信发送间隔不到60秒(请'.(60-$result).'秒后再试)';exit;
+            }
+        }else{
+            //最近10分钟,该手机号没有发送过短信
+            //可以继续发送
+        }
+
         //接收请求手机号码
-        $phone = '123';
+        //$phone = '123';
         //发送短信
-        $response = Sms::sendSms(
+        /*$response = Sms::sendSms(
             "石头故事", // 短信签名
             "SMS_109545450", // 短信模板编号
             $phone, // 短信接收者
@@ -57,18 +76,18 @@ class MemberController extends \yii\web\Controller
                 //"product"=>"dsd"
             )//,
         //"123"   // 流水号,选填
-        );
+        );*/
         //根据$response结果判断是否发送成功 $response->Code
         //保存验证码(SESSION或)REDIS
-        $redis = new \Redis();
-        $redis->connect('127.0.0.1');
-        $redis->set('captcha_'.$phone,rand(1000,9999),10*60);
+
+        $code = rand(1000,9999);
+        $redis->set('captcha_'.$phone,$code,10*60);
         //验证验证码
         //$code = $redis->get('captcha_'.$phone);
         //if($code == '1234');
 
-        
-        return 'sucess';// 'fail'
+        echo '发送成功,验证码是'.$code;
+        //return 'sucess';// 'fail'
 
     }
     //AJAX验证短信

@@ -4,11 +4,13 @@ namespace frontend\controllers;
 use backend\models\GoodsCategory;
 use frontend\models\Goods;
 use frontend\models\Order;
+use frontend\models\SphinxClient;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\data\Pagination;
 use yii\db\ActiveQuery;
 use yii\db\Exception;
+use yii\helpers\ArrayHelper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -522,5 +524,33 @@ tel	char(11)	电话号码*/
             ->setHtmlBody('<p><span style="color: red">我 秦始皇 打钱</span>它规定怎样将个人计算机连接到Internet的邮件服务器</p>')
             ->send();
     var_dump($r);
+    }
+
+    //中文分词搜索测试
+    public function actionSearch(){
+        $cl = new SphinxClient();
+        $cl->SetServer ( '127.0.0.1', 9312);//设置sphinx的searchd服务信息
+
+        $cl->SetConnectTimeout ( 10 );//超时
+        $cl->SetArrayResult ( true );//结果以数组形式返回
+// $cl->SetMatchMode ( SPH_MATCH_ANY);
+        $cl->SetMatchMode ( SPH_MATCH_EXTENDED2);//设置匹配模式
+        $cl->SetLimits(0, 1000);//设置分页
+        $info = '索尼电视';//查询关键字
+        //进行查询   Query(查询关键字,使用的索引)
+        $res = $cl->Query($info, 'goods');//shopstore_search
+//print_r($cl);
+        //print_r($res);
+        if(isset($res['matches'])){
+            //查询到结果
+            $ids = ArrayHelper::map($res['matches'],'id','id');
+            //var_dump($ids);
+            $models = Goods::find()->where(['in','id',$ids])->all();
+            var_dump($models);
+        }else{
+            //没有查询到结果
+        }
+
+
     }
 }
